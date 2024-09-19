@@ -1,0 +1,27 @@
+services:
+    postgres:
+        image: postgres:latest
+        # on force le UID et GID pour un fonctionnement sur Linux. Attention, bien lire le README pour le premier lancement de la BDD.
+        user: "${UID}:${GID}"
+        container_name: carpooling-db
+        restart: always
+        environment:
+          - POSTGRES_USER=${POSTGRES_USER}
+          - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+          - POSTGRES_DB=${POSTGRES_DATABASE}
+        logging: # option de paramétrage des logs
+          options:
+            max-size: 10m # fichier de 10 Mo maximum
+            max-file: "3" # jusqu'à 3 fichiers de log
+        ports:
+          - '5432:5432' # redirection de port, le nombre de gauche correspond au port local et le nombre de droite au utilisé sur le conteneur
+        volumes:
+          # on monte le volume pointant vers le dossier contenant les informations des BDD 
+          - ${POSTGRES_DUMP_DIR}:/var/lib/postgresql/data
+          # on monte également le dossier contenant les variables d'exécution (/var/run sur Linux).
+          # ce dossier contient, par exemple, un fichier ".lock" protégeant l'accès en écriture aux fichiers de BDD
+          # lorsque le SGBDR est démarré 
+          # - ./postgres-run:/var/run/postgresql
+          # copie du script SQL de création de base de données sur le conteneur
+          - ./db/dump/carpooling-create-postgre.sql:/docker-entrypoint-initdb.d/carpooling-create-postgre.sql
+
